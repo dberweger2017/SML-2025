@@ -57,9 +57,10 @@ if __name__ == "__main__":
     print("[INFO]: Defining parameter grid for GridSearchCV...")
     # Keep this small initially to test the workflow quickly
     param_grid = {
-        'pca__n_components': [50, 100, 200], # Test a few PCA component numbers
-        'regressor__learning_rate': [0.1, 0.05], # Test a couple of learning rates
-        'regressor__max_iter': [100, 200] # Test a couple of iteration counts
+        'pca__n_components': [30, 50, 75, 100], # Explore around 50
+        'regressor__learning_rate': [0.1, 0.05], # Keep or slightly expand
+        'regressor__max_iter': [200, 300, 500], # Test higher iterations
+        'regressor__max_leaf_nodes': [31, 50, 70] # Add leaf node control
     }
     # Note: More extensive grids are in the game plan markdown for later runs
 
