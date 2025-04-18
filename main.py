@@ -12,21 +12,24 @@ from utils import (
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.ensemble import HistGradientBoostingRegressor # Ensure this is imported
+# *** REMOVE or COMMENT OUT the HGBR import ***
+# from sklearn.ensemble import HistGradientBoostingRegressor
+# *** ADD the RandomForestRegressor import ***
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, make_scorer
 
 # --- Configuration ---
-# Ensure config.yaml has load_rgb: True and downsample_factor: 5
+# Ensure config.yaml has load_rgb: True and downsample_factor: 30 (or your desired best)
 
 
 if __name__ == "__main__":
     # 1. Load Configuration from config.yaml
     print("[INFO]: Loading configuration...")
     config = load_config()
-    # Verify the settings (optional)
+    # Verify the settings (optional) - Make sure it matches your best run (e.g., downsample_factor: 30)
     # assert config['load_rgb'] is True
-    # assert config['downsample_factor'] == 5
+    # assert config['downsample_factor'] == 30
 
     # 2. Load Training Data
     print("[INFO]: Loading training dataset...")
@@ -41,27 +44,28 @@ if __name__ == "__main__":
     print(f"[INFO]: Data split: {X_train.shape=}, {X_val.shape=}")
 
     # 4. Define the Preprocessing and Model Pipeline
-    print("[INFO]: Defining the pipeline...")
+    # *** UPDATED FOR RandomForestRegressor ***
+    print("[INFO]: Defining the pipeline with RandomForestRegressor...")
     pipeline = Pipeline([
         ('scaler', StandardScaler()), # Scale features
-        # PCA step - n_components will be tuned by GridSearchCV
+        # Keep PCA step - n_components will be tuned by GridSearchCV
         ('pca', PCA(random_state=42)),
-        # Ensure the regressor is HistGradientBoostingRegressor
-        ('regressor', HistGradientBoostingRegressor(random_state=42))
+        # *** CHANGE REGRESSOR HERE to RandomForestRegressor ***
+        ('regressor', RandomForestRegressor(random_state=42, n_jobs=-1)) # Use n_jobs=-1 for speed
     ])
 
-    # 5. Define the *UPDATED* Hyperparameter Grid
-    print("[INFO]: Defining updated parameter grid for GridSearchCV...")
-    # Grid focuses on fewer PCA components and more iterations
+    # 5. Define the Hyperparameter Grid for RandomForestRegressor
+    # *** NEW param_grid for RandomForestRegressor ***
+    print("[INFO]: Defining parameter grid for RandomForestRegressor...")
     param_grid = {
-        # Focus PCA around the new best (20)
-        'pca__n_components': [15, 20, 30],
-        # Keep the best learning rate, maybe test only this one to speed up
-        'regressor__learning_rate': [0.02],
-        # *** Push iterations higher ***
-        'regressor__max_iter': [2000, 2500, 3000],
-        # Keep the best leaf node count, maybe test only this one
-        'regressor__max_leaf_nodes': [50]
+        # Test PCA around the low values that worked for HGBR (e.g., 20) on this data
+        'pca__n_components': [10, 15, 20, 30, 50],
+        # Typical RandomForest parameters to tune
+        'regressor__n_estimators': [100, 200, 300, 400], # Number of trees
+        'regressor__max_depth': [None, 10, 20, 30], # Max depth (None means no limit)
+        'regressor__min_samples_split': [2, 5, 10], # Min samples to split a node
+        'regressor__min_samples_leaf': [1, 3, 5] # Min samples in a leaf node
+        # 'regressor__max_features': ['sqrt', 'log2'] # Often defaults are good ('sqrt' for RF)
     }
     print(f"[INFO]: Parameter grid to search:\n{param_grid}")
 
@@ -78,7 +82,7 @@ if __name__ == "__main__":
         cv=5, # 5-fold cross-validation
         scoring=neg_mae_scorer,
         n_jobs=-1, # Use all available CPU cores
-        verbose=2 # Show progress
+        verbose=1 # Set verbose level (e.g., 1 for less output)
     )
 
     print("[INFO]: Starting Grid Search CV on the training data...")
