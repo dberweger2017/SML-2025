@@ -12,14 +12,12 @@ from utils import (
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor # Ensure this is imported
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, make_scorer
 
 # --- Configuration ---
 # Ensure config.yaml has load_rgb: True and downsample_factor: 5
-# Or manually override here for testing (not recommended for final)
-# config = {'data_dir': './data', 'load_rgb': True, 'downsample_factor': 5}
 
 
 if __name__ == "__main__":
@@ -32,8 +30,6 @@ if __name__ == "__main__":
 
     # 2. Load Training Data
     print("[INFO]: Loading training dataset...")
-    # images are flattened arrays of pixel values
-    # distances are the target values (in meters)
     images, distances = load_dataset(config, split="train")
     print(f"[INFO]: Training dataset loaded: {images.shape=}, {distances.shape=}")
 
@@ -48,21 +44,23 @@ if __name__ == "__main__":
     print("[INFO]: Defining the pipeline...")
     pipeline = Pipeline([
         ('scaler', StandardScaler()), # Scale features
-        # Start with PCA keeping a moderate number of components or variance
-        ('pca', PCA(n_components=100, random_state=42)),
+        # PCA step - n_components will be tuned by GridSearchCV
+        ('pca', PCA(random_state=42)),
+        # Ensure the regressor is HistGradientBoostingRegressor
         ('regressor', HistGradientBoostingRegressor(random_state=42))
     ])
 
-    # 5. Define a *SMALL* Hyperparameter Grid for the First Run
-    print("[INFO]: Defining parameter grid for GridSearchCV...")
-    # Keep this small initially to test the workflow quickly
+    # 5. Define the *UPDATED* Hyperparameter Grid
+    print("[INFO]: Defining updated parameter grid for GridSearchCV...")
+    # Grid focuses on fewer PCA components and more iterations
     param_grid = {
-        'pca__n_components': [30, 50, 75, 100], # Explore around 50
-        'regressor__learning_rate': [0.1, 0.05], # Keep or slightly expand
-        'regressor__max_iter': [200, 300, 500], # Test higher iterations
-        'regressor__max_leaf_nodes': [31, 50, 70] # Add leaf node control
+        'pca__n_components': [15, 20, 30, 40], # Explore even lower PCA components
+        'regressor__learning_rate': [0.05, 0.02], # Focus on lower learning rates
+        'regressor__max_iter': [500, 750, 1000], # Test higher iterations
+        'regressor__max_leaf_nodes': [31, 50] # Confirm 31 is good, maybe test one slightly higher
     }
-    # Note: More extensive grids are in the game plan markdown for later runs
+    print(f"[INFO]: Parameter grid to search:\n{param_grid}")
+
 
     # 6. Perform Grid Search with Cross-Validation
     print("[INFO]: Setting up GridSearchCV...")
