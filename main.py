@@ -54,10 +54,17 @@ if __name__ == "__main__":
     print("[INFO]: Defining updated parameter grid for GridSearchCV...")
     # Grid focuses on fewer PCA components and more iterations
     param_grid = {
-        'pca__n_components': [15, 20, 30, 40], # Explore even lower PCA components
-        'regressor__learning_rate': [0.05, 0.02], # Focus on lower learning rates
-        'regressor__max_iter': [500, 750, 1000], # Test higher iterations
-        'regressor__max_leaf_nodes': [31, 50] # Confirm 31 is good, maybe test one slightly higher
+        # Keep PCA components focused around the previous best (30)
+        'pca__n_components': [20, 30, 40],
+
+        # Keep learning rates focused around the previous best (0.02)
+        'regressor__learning_rate': [0.02, 0.05],
+
+        # *** Test significantly higher iterations ***
+        'regressor__max_iter': [1000, 1500, 2000],
+
+        # Keep leaf nodes focused around the previous best (50) and contender (31)
+        'regressor__max_leaf_nodes': [31, 50]
     }
     print(f"[INFO]: Parameter grid to search:\n{param_grid}")
 
