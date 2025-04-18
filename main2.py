@@ -55,6 +55,7 @@ if __name__ == "__main__":
                 early_stopping=True,
                 validation_fraction=0.1,
                 tol=1e-3,
+                verbose=0,            # reduce per-iteration output
                 random_state=42,
             ),
         ),
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         ('stack', stack),
     ])
 
-    # 6. Hyperparameter search via successive halving
+    # 6. Hyperparameter search via successive halving (exhaustive sampling of 108 combos)
     print("[INFO]: Setting up hyperparameter search (HalvingRandomSearchCV)...")
     param_dist = {
         'pca__n_components': [20, 30, 40, 50],
@@ -110,6 +111,7 @@ if __name__ == "__main__":
     search = HalvingRandomSearchCV(
         estimator=pipeline,
         param_distributions=param_dist,
+        n_candidates=108,            # sample *every* combination upfront
         factor=3,
         resource='stack__hgb__max_iter',  # uses HGBR iterations as resource
         max_resources=3000,
